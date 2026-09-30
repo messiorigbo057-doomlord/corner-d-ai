@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -90,7 +89,7 @@ fun VidForgeApp(
                     },
                     icon = {
                         Icon(
-                            Icons.Default.Folder,
+                            Icons.Default.Add,
                             contentDescription = "Projects"
                         )
                     },
@@ -148,6 +147,7 @@ fun CreateScreen(
     modifier: Modifier,
     vm: VideoViewModel
 ) {
+
     var prompt by remember {
         mutableStateOf("")
     }
@@ -453,6 +453,7 @@ fun ProjectsScreen(
     modifier: Modifier,
     vm: VideoViewModel
 ) {
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -535,6 +536,7 @@ fun ProjectsScreen(
 fun SettingsScreen(
     modifier: Modifier
 ) {
+
     Column(
         modifier = modifier
             .fillMaxSize()
