@@ -1,6 +1,8 @@
 package com.cornerd.vidforgeai
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -42,46 +44,59 @@ class VideoViewModel : ViewModel() {
         duration: String,
         ratio: String
     ) {
+
         loading = true
         error = null
         lastUrl = null
 
         viewModelScope.launch {
+
             try {
 
                 val create = withContext(Dispatchers.IO) {
 
+                    val durationValue =
+                        duration.removeSuffix("s").toInt()
+
                     val json = JSONObject()
                         .put("prompt", prompt)
-                        .put(
-                            "duration",
-                            duration.removeSuffix("s").toInt()
-                        )
+                        .put("duration", durationValue)
                         .put("aspect_ratio", ratio)
                         .put("resolution", "720p")
 
-                    val body = json.toString()
+                    val body = json
+                        .toString()
                         .toRequestBody(
                             "application/json".toMediaType()
                         )
 
-                    val req = Request.Builder()
-                        .url(VideoApi.BASE_URL + "/generate")
+                    val request = Request.Builder()
+                        .url(
+                            VideoApi.BASE_URL +
+                                "/generate"
+                        )
                         .post(body)
                         .build()
 
-                    client.newCall(req).execute().use { response ->
+                    client
+                        .newCall(request)
+                        .execute()
+                        .use { response ->
 
-                        val text = response.body?.string().orEmpty()
+                            val text =
+                                response.body
+                                    ?.string()
+                                    .orEmpty()
 
-                        if (!response.isSuccessful) {
-                            throw Exception(
-                                "Server error ${response.code}: $text"
-                            )
+                            if (!response.isSuccessful) {
+
+                                throw Exception(
+                                    "Server error ${response.code}: $text"
+                                )
+                            }
+
+                            JSONObject(text)
                         }
-
-                        JSONObject(text)
-                    }
                 }
 
                 val id = create.getString("id")
@@ -94,68 +109,90 @@ class VideoViewModel : ViewModel() {
                     status = "starting"
                 )
 
-                history = listOf(newJob) + history
+                history =
+                    listOf(newJob) + history
 
                 repeat(60) {
 
                     delay(3000)
 
-                    val result = withContext(Dispatchers.IO) {
+                    val result =
+                        withContext(Dispatchers.IO) {
 
-                        val req = Request.Builder()
-                            .url(
-                                VideoApi.BASE_URL +
-                                    "/generate/$id"
-                            )
-                            .get()
-                            .build()
+                            val request =
+                                Request.Builder()
+                                    .url(
+                                        VideoApi.BASE_URL +
+                                            "/generate/$id"
+                                    )
+                                    .get()
+                                    .build()
 
-                        client.newCall(req).execute().use { response ->
+                            client
+                                .newCall(request)
+                                .execute()
+                                .use { response ->
 
-                            val text = response.body?.string().orEmpty()
+                                    val text =
+                                        response.body
+                                            ?.string()
+                                            .orEmpty()
 
-                            if (!response.isSuccessful) {
-                                throw Exception(
-                                    "Status error ${response.code}: $text"
-                                )
-                            }
+                                    if (!response.isSuccessful) {
 
-                            JSONObject(text)
+                                        throw Exception(
+                                            "Status error ${response.code}: $text"
+                                        )
+                                    }
+
+                                    JSONObject(text)
+                                }
                         }
-                    }
 
-                    val status = result.optString("status")
+                    val status =
+                        result.optString("status")
 
                     if (status == "succeeded") {
 
-                        val url = result.optString("url")
+                        val url =
+                            result.optString("url")
 
                         lastUrl = url
 
-                        val currentHistory: List<VideoJob> = history
+                        val currentHistory =
+                            history
 
                         if (currentHistory.isNotEmpty()) {
-                            val updatedFirstJob = currentHistory[0].copy(
-                                url = url,
-                                status = status
-                            )
 
-                            history = listOf(updatedFirstJob) +
-                                currentHistory.drop(1)
+                            val updatedJob =
+                                currentHistory[0].copy(
+                                    url = url,
+                                    status = status
+                                )
+
+                            history =
+                                listOf(updatedJob) +
+                                    currentHistory.drop(1)
                         }
 
                         loading = false
+
                         return@launch
                     }
 
-                    if (status == "failed" || status == "canceled") {
+                    if (
+                        status == "failed" ||
+                        status == "canceled"
+                    ) {
 
-                        error = result.optString(
-                            "error",
-                            "Video generation failed."
-                        )
+                        error =
+                            result.optString(
+                                "error",
+                                "Video generation failed."
+                            )
 
                         loading = false
+
                         return@launch
                     }
                 }
@@ -167,8 +204,9 @@ class VideoViewModel : ViewModel() {
 
             } catch (e: Exception) {
 
-                error = e.message
-                    ?: "Could not connect to the video server."
+                error =
+                    e.message
+                        ?: "Could not connect to the video server."
 
                 loading = false
             }
