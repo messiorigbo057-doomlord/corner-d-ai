@@ -22,20 +22,33 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2026.09.00")
+    // Stable Compose versions compatible with AGP 8.13.0 / compileSdk 36
+    val composeBom = platform("androidx.compose:compose-bom:2025.08.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
-    implementation("androidx.activity:activity-compose:1.13.0")
+    // AndroidX Activity
+    implementation("androidx.activity:activity-compose:1.10.1")
+
+    // Jetpack Compose
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
 
-    implementation("androidx.navigation:navigation-compose:2.9.4")
+    // Lifecycle
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.3")
+
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.9.0")
+
+    // Image loading
     implementation("io.coil-kt:coil-compose:2.7.0")
+
+    // Networking
     implementation("com.squareup.okhttp3:okhttp:5.1.0")
+
+    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 }
