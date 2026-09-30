@@ -1,0 +1,25 @@
+name: Unzip Project
+
+on:
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: |
+          unzip -o "*.zip" -d .
+          rm -f "*.zip"
+
+      - name: Commit extracted files
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add .
+          git commit -m "Extract project files" || echo "No changes to commit"
+          git push
