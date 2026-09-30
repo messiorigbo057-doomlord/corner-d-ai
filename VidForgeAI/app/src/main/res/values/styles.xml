@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.VidForge" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#08050D</item>
+        <item name="android:navigationBarColor">#08050D</item>
+        <item name="android:windowSplashScreenBackground">#08050D</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/cornerd_logo</item>
+        <item name="android:windowSplashScreenAnimationDuration">700</item>
+    </style>
+</resources>
