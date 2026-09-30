@@ -1,10 +1,11 @@
 package com.cornerd.vidforgeai
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -22,16 +23,16 @@ data class VideoJob(
 
 class VideoViewModel : ViewModel() {
 
-    var loading by androidx.compose.runtime.mutableStateOf(false)
+    var loading by mutableStateOf(false)
         private set
 
-    var error by androidx.compose.runtime.mutableStateOf<String?>(null)
+    var error by mutableStateOf<String?>(null)
         private set
 
-    var lastUrl by androidx.compose.runtime.mutableStateOf<String?>(null)
+    var lastUrl by mutableStateOf<String?>(null)
         private set
 
-    var history by androidx.compose.runtime.mutableStateOf(listOf<VideoJob>())
+    var history by mutableStateOf<List<VideoJob>>(emptyList())
         private set
 
     private val client = OkHttpClient()
@@ -48,7 +49,6 @@ class VideoViewModel : ViewModel() {
         viewModelScope.launch {
             try {
 
-                // Create the video generation request
                 val create = withContext(Dispatchers.IO) {
 
                     val json = JSONObject()
@@ -72,8 +72,7 @@ class VideoViewModel : ViewModel() {
 
                     client.newCall(req).execute().use { response ->
 
-                        val text =
-                            response.body?.string().orEmpty()
+                        val text = response.body?.string().orEmpty()
 
                         if (!response.isSuccessful) {
                             throw Exception(
@@ -87,17 +86,16 @@ class VideoViewModel : ViewModel() {
 
                 val id = create.getString("id")
 
-                history = listOf(
-                    VideoJob(
-                        prompt = prompt,
-                        duration = duration,
-                        ratio = ratio,
-                        url = null,
-                        status = "starting"
-                    )
-                ) + history
+                val newJob = VideoJob(
+                    prompt = prompt,
+                    duration = duration,
+                    ratio = ratio,
+                    url = null,
+                    status = "starting"
+                )
 
-                // Poll the backend until the video is finished.
+                history = listOf(newJob) + history
+
                 repeat(60) {
 
                     delay(3000)
@@ -112,55 +110,45 @@ class VideoViewModel : ViewModel() {
                             .get()
                             .build()
 
-                        client.newCall(req)
-                            .execute()
-                            .use { response ->
+                        client.newCall(req).execute().use { response ->
 
-                                val text =
-                                    response.body?.string()
-                                        .orEmpty()
+                            val text = response.body?.string().orEmpty()
 
-                                if (!response.isSuccessful) {
-                                    throw Exception(
-                                        "Status error ${response.code}: $text"
-                                    )
-                                }
-
-                                JSONObject(text)
+                            if (!response.isSuccessful) {
+                                throw Exception(
+                                    "Status error ${response.code}: $text"
+                                )
                             }
+
+                            JSONObject(text)
+                        }
                     }
 
-                    val status =
-                        result.optString("status")
+                    val status = result.optString("status")
 
                     if (status == "succeeded") {
 
-                        val url =
-                            result.optString("url")
+                        val url = result.optString("url")
 
                         lastUrl = url
 
-                        history =
-                            history.mapIndexed { index, job ->
+                        val currentHistory: List<VideoJob> = history
 
-                                if (index == 0) {
-                                    job.copy(
-                                        url = url,
-                                        status = status
-                                    )
-                                } else {
-                                    job
-                                }
-                            }
+                        if (currentHistory.isNotEmpty()) {
+                            val updatedFirstJob = currentHistory[0].copy(
+                                url = url,
+                                status = status
+                            )
+
+                            history = listOf(updatedFirstJob) +
+                                currentHistory.drop(1)
+                        }
 
                         loading = false
                         return@launch
                     }
 
-                    if (
-                        status == "failed" ||
-                        status == "canceled"
-                    ) {
+                    if (status == "failed" || status == "canceled") {
 
                         error = result.optString(
                             "error",
@@ -179,9 +167,8 @@ class VideoViewModel : ViewModel() {
 
             } catch (e: Exception) {
 
-                error =
-                    e.message
-                        ?: "Could not connect to the video server."
+                error = e.message
+                    ?: "Could not connect to the video server."
 
                 loading = false
             }
@@ -191,7 +178,6 @@ class VideoViewModel : ViewModel() {
 
 object VideoApi {
 
-    // CORNER-D AI production backend
     const val BASE_URL =
         "https://corner-d-ai.onrender.com"
 }
