@@ -13,8 +13,8 @@ jobs:
 
       - name: Unzip project
         run: |
-          unzip -o "*.zip" -d .
-          rm -f "*.zip"
+          unzip -o ./*.zip -d .
+          rm -f ./*.zip
 
       - name: Commit extracted files
         run: |
